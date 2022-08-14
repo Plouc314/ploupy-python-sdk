@@ -2,6 +2,19 @@ from pydantic import BaseModel
 
 from .core import Point
 
+
+class JoinQueue(BaseModel):
+    qid: str
+
+
+class LeaveQueue(BaseModel):
+    qid: str
+
+
+class GameState(BaseModel):
+    gid: str
+
+
 class BuildFactory(BaseModel):
     coord: Point
     """Coordinate where to build the factory"""

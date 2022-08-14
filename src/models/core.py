@@ -3,6 +3,7 @@ import numpy as np
 
 Pos = list | tuple | np.ndarray
 
+
 class Point(BaseModel):
     """
     Represent a point in 2D
@@ -121,3 +122,28 @@ class GameConfig(BaseModel):
     """
     probability that a tile with maximum occupation lose 1 occupation
     """
+
+
+class Response(BaseModel):
+    """
+    Represent a response from the server
+    """
+
+    success: bool = True
+    msg: str = ""
+
+
+class StartGame(Response):
+    """
+    Represents the start game event
+    """
+
+    gid: str
+
+
+class QueueInvitation(Response):
+    """
+    Represents an invitation to a queue
+    """
+
+    qid: str
