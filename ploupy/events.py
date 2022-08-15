@@ -1,15 +1,16 @@
 import json
+import logging
 from typing import Awaitable, Callable, Type
 from functools import partial
 
 from pydantic import BaseModel, ValidationError
 
-from .game.game import Game
-
 from .models import core as _c, actions as _a, game as _g
-from .exceptions import InvalidServerDataFormatException
+from .core import InvalidServerDataFormatException
 from .gamemanager import GameManager
 from .sio import sio
+
+logger = logging.getLogger("ploupy")
 
 
 def _with_model(
@@ -41,31 +42,30 @@ def with_model(Model: Type[BaseModel]) -> Callable[[dict], Awaitable[str]]:
 class EventsHandler:
     def __init__(self, game_manager: GameManager) -> None:
         self._game_manager = game_manager
-
-    def _bind_events(self):
-        """
-        Bind events methods to sio instance
-        """
         _bind_events(self)
 
 
 def _bind_events(handler: EventsHandler):
+    """
+    Bind events methods to sio instance
+    """
+
     @sio.event
     async def connect():
-        print("connected")
+        logger.info("Connected.")
 
     @sio.event
     async def connect_error(data):
-        pass
+        msg = data["message"]
+        logger.error(f"Connection failed: {msg}")
 
     @sio.event
     async def disconnect():
-        print("disconnected")
+        logger.info("Disconnected.")
 
     @sio.on("queue_invitation")
     @with_model(_c.QueueInvitation)
     async def queue_invitation(model: _c.QueueInvitation):
-        print("queue invitation", model)
         await sio.emit("join_queue", _a.JoinQueue(qid=model.qid).dict())
 
     @sio.on("start_game")
@@ -80,10 +80,7 @@ def _bind_events(handler: EventsHandler):
         game = handler._game_manager.get_game(state.gid)
 
         if game is None:
-            print("create game")
-            # unknown id -> new game
-            game = Game(state)
-            handler._game_manager.add_game(game)
+            logger.info(f"[gid: {state.gid[:4]}] New game")
+            await handler._game_manager.create_game(state)
         else:
-            print("update state")
-            game._update_state(state)
+            await game._update_state(state)

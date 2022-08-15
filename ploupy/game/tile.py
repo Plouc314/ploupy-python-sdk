@@ -1,16 +1,31 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import numpy as np
 
+from ..models.core import GameConfig
+
+from .player import Player
+
+from ..order import OrderMixin
+
 from ..models.game import TileState
-from ..exceptions import InvalidStateException
+from ..core import InvalidStateException
+
+if TYPE_CHECKING:
+    from .game import Game
 
 
-class Tile:
-    def __init__(self, state: TileState) -> None:
+class Tile(OrderMixin):
+    def __init__(self, state: TileState, game: Game) -> None:
+        super().__init__()
         self._assert_complete_state(state)
+        self._config: GameConfig = game.config
         self._id: str = state.id
         self._coord: np.ndarray = state.coord.coord
         self._owner: str | None = state.owner
         self._occupation: int = state.occupation
+        self._building_id: str | None = None
 
     def _assert_complete_state(self, state: TileState):
         if None in (state.coord, state.occupation):
@@ -32,7 +47,17 @@ class Tile:
     def occupation(self) -> int:
         return self._occupation
 
-    def _update_state(self, state: TileState):
+    def can_build(self, player: Player) -> bool:
+        """
+        Return if the given player can build on this tile
+        """
+        return (
+            self._building_id is None
+            and self.owner == player.username
+            and self._occupation >= self._config.building_occupation_min
+        )
+
+    async def _update_state(self, state: TileState):
         """
         Update instance with given state
         """
@@ -41,3 +66,9 @@ class Tile:
         self._owner = state.owner
         if state.occupation is not None:
             self._occupation = state.occupation
+
+        for (on, action) in self._orders:
+            if on(self):
+                action(self)
+
+        await self._resolve_orders()

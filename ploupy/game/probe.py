@@ -1,19 +1,29 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import numpy as np
 
+from ..models.core import GameConfig
+
+from .entity import Entity
+
 from ..models.game import ProbeState
-from ..exceptions import InvalidStateException
+from ..core import InvalidStateException
+
+if TYPE_CHECKING:
+    from .game import Game
 
 
-class Probe:
-    def __init__(self, state: ProbeState) -> None:
+class Probe(Entity):
+    def __init__(self, state: ProbeState, game: Game) -> None:
+        super().__init__()
         self._assert_complete_state(state)
+        self._config = game.config
         self._id: str = state.id
         self._pos: np.ndarray = state.pos.pos
         self._target: np.ndarray | None = (
             None if state.target is None else state.target.coord
         )
-        self._alive = True
-        self._death_cause: str | None = None
 
     def _assert_complete_state(self, state: ProbeState):
         if None in (state.pos):
@@ -33,20 +43,7 @@ class Probe:
             return None
         return self._target.copy()
 
-    @property
-    def alive(self) -> bool:
-        return self._alive
-
-    @property
-    def death_cause(self) -> str | None:
-        return self._death_cause
-
-    def _die(self, death_cause: str):
-        """ """
-        self._alive = False
-        self._death_cause = death_cause
-
-    def _update_state(self, state: ProbeState):
+    async def _update_state(self, state: ProbeState):
         """
         Update instance with given state
         """
