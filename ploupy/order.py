@@ -39,10 +39,17 @@ class OrderMixin:
         super().__init__(*args, **kwargs)
         self._orders: list[Order] = []
 
-    def place_order(self, order: Order) -> None:
+    async def place_order(self, order: Order) -> None:
         """
         Place an order
+
+        Try to resolve it directly, if not
+        possible, add it to the orders pool
+        and tries to resolve it on game state update
         """
+        if await order.resolve():
+            return
+
         self._orders.append(order)
 
     async def _resolve_orders(self) -> None:

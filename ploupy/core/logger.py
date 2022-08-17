@@ -2,7 +2,7 @@ import logging
 from colorlog import ColoredFormatter
 
 
-def setup_logger():
+def setup_logger(log_level):
     handler = logging.StreamHandler()
 
     formatter = ColoredFormatter(
@@ -12,4 +12,4 @@ def setup_logger():
 
     logger = logging.getLogger("ploupy")
     logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(log_level)

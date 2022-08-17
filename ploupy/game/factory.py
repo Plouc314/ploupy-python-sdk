@@ -3,8 +3,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ..models.core import GameConfig
-
 from .entity import Entity
 
 from ..models.game import FactoryState
@@ -12,12 +10,14 @@ from ..core import InvalidStateException
 
 if TYPE_CHECKING:
     from .game import Game
+    from .player import Player
 
 
 class Factory(Entity):
-    def __init__(self, state: FactoryState, game: Game) -> None:
+    def __init__(self, state: FactoryState, owner: Player, game: Game) -> None:
         super().__init__()
         self._assert_complete_state(state)
+        self._owner = owner
         self._map = game.map
         self._config = game.config
         self._id: str = state.id

@@ -1,3 +1,4 @@
+from ..order import OrderMixin
 from .entity import Entity
 from ..models.core import GameConfig
 from ..models.game import GameState
@@ -7,8 +8,9 @@ from .map import Map
 from .player import Player
 
 
-class Game:
+class Game(OrderMixin):
     def __init__(self, state: GameState) -> None:
+        super().__init__()
         self._assert_complete_state(state)
         self._gid = state.gid
         self._config: GameConfig = state.config
@@ -59,3 +61,5 @@ class Game:
                 await player._update_state(ps)
 
         Entity._remove_deads(self._players)
+
+        await self._resolve_orders()

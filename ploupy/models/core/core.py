@@ -1,6 +1,16 @@
-from pydantic import BaseModel
 import numpy as np
+from datetime import datetime
+from pydantic import BaseModel
+from typing import Literal
 
+
+GameModes = Literal["base-2", "base-3", "base-4"]
+"""
+List of all game modes
+"""
+
+
+Coord = list | tuple | np.ndarray
 Pos = list | tuple | np.ndarray
 
 
@@ -32,6 +42,15 @@ class Point(BaseModel):
         Return the point as position (float dtype)
         """
         return np.array([self.x, self.y], dtype=float)
+
+
+class Response(BaseModel):
+    """
+    Represent a response from a server (api/sio)
+    """
+
+    success: bool = True
+    msg: str = ""
 
 
 class GameConfig(BaseModel):
@@ -124,26 +143,143 @@ class GameConfig(BaseModel):
     """
 
 
-class Response(BaseModel):
+class User(BaseModel):
     """
-    Represent a response from the server
-    """
-
-    success: bool = True
-    msg: str = ""
-
-
-class StartGame(Response):
-    """
-    Represents the start game event
+    Represent a user general informations
     """
 
-    gid: str
-
-
-class QueueInvitation(Response):
+    uid: str
+    username: str
+    email: str
+    avatar: str
     """
-    Represents an invitation to a queue
+    Name of the avatar
+    (see ploupy-front `textures.tsx` for possible values)
+    """
+    is_bot: bool
+    owner: str | None
+    """
+    In case the user is a bot:
+    store the uid of its owner
+    """
+    bots: list[str]
+    """
+    List of bots uid
+    """
+    joined_on: datetime
+    last_online: datetime
+
+
+class UserKeys(BaseModel):
+    """
+    Represent keys of a user
     """
 
-    qid: str
+    bot_key: str
+    """
+    Key to connect as a bot (require user to be a bot)
+    """
+
+
+class GameMode(BaseModel):
+    """
+    Represent a game mode
+    """
+
+    id: str
+    name: str
+    config: GameConfig
+
+
+class DBConfig(BaseModel):
+    """
+    Represent the config node of the db
+    """
+
+    modes: list[GameMode]
+
+
+class GameStats(BaseModel):
+    """
+    Represents the statistics of one game
+    """
+
+    date: datetime
+
+    mmr: int
+    """
+    MMR of the user AFTER the game
+    """
+
+    ranking: list[str]
+    """
+    List of UIDs of the player in the game (including self)
+    sorted by resulting position, i.e. best (index 0) to worst
+    """
+
+
+class UserMMRs(BaseModel):
+    """
+    Represents the current MMRs of the user in all game modes
+    """
+
+    mmrs: dict[str, int]
+    """
+    Key: game mode id
+    Value: current MMR
+    """
+
+
+class GameModeHistory(BaseModel):
+    """
+    Represents the history of all played games
+    in a specific mode
+    """
+
+    mode: GameMode
+    history: list[GameStats]
+
+
+class UserStats(BaseModel):
+    """
+    Represents the statistics and ranking of a user
+    in all the modes
+    """
+
+    mmrs: UserMMRs
+    history: dict[str, GameModeHistory]
+    """
+    all the game mode's histories
+    keys: game mode id
+    """
+
+
+class ExtendedGameModeStats(BaseModel):
+    """
+    Represents the statistics for a game mode
+    once processed, with as much insights as possible
+    """
+
+    mode: GameMode
+    """
+    game mode
+    """
+
+    scores: list[int]
+    """
+    List of occurence of the resulting position,
+    for ex the value at index 0 indicates the number
+    of times the user finished in first position
+    """
+
+    dates: list[str]
+    """
+    List of all the dates where a game was played
+    Format: ISO
+    """
+
+    mmr_hist: list[int]
+    """
+    List of all the values of the MMR over time
+    (same order as `dates`)
+    """

@@ -1,3 +1,4 @@
+import asyncio
 from typing import Type
 
 from .behaviour import Behaviour
@@ -28,4 +29,6 @@ class GameManager:
         self._games[state.gid] = game
         self._behaviours[state.gid] = behaviour
 
+        # wait a little -> avoid performing actions at same time of inital game state
+        await asyncio.sleep(0.1)
         await behaviour.on_start()

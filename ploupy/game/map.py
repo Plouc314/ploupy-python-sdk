@@ -8,10 +8,12 @@ from .tile import Tile
 
 if TYPE_CHECKING:
     from .game import Game
+    from .player import Player
 
 
 class Map:
     def __init__(self, state: MapState, game: Game) -> None:
+        self._game = game
         self._config: GameConfig = game.config
         self._map_tiles: dict[str, Tile] = {s.id: Tile(s, game) for s in state.tiles}
         self._matrix_tiles: list[list[Tile]] = self._build_matrix_tiles()
@@ -36,6 +38,22 @@ class Map:
         if x < 0 or y < 0 or x >= self._config.dim.x or y >= self._config.dim.y:
             return None
         return self._matrix_tiles[x][y]
+
+    def is_opponent_tile(self, player: Player, coord: Pos) -> bool:
+        """
+        Return if the tile at the given pos is owned by an opponent
+        of the given player
+        """
+        tile = self.get_tile(coord)
+        if tile is None or tile.owner is None:
+            return False
+
+        for opp in self._game.players:
+            if opp is player:
+                continue
+            if tile.owner == opp.username:
+                return True
+        return False
 
     async def _update_state(self, state: MapState):
         """

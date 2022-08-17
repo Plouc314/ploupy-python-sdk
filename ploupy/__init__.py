@@ -11,3 +11,4 @@ from .actions import Actions
 from .behaviour import Behaviour
 from .bot import Bot
 from .order import Order
+from .orders import BuildFactoryOrder, BuildTurretOrder

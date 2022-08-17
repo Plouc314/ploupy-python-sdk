@@ -1,5 +1,7 @@
 from functools import partial
 
+from .order import Order
+
 from .core.exceptions import PloupyException
 from .game import Game, Probe, Turret, Player, Factory
 
@@ -33,6 +35,22 @@ class Behaviour:
                 self._wrap_callback(self.on_probe_build),
                 player=player,
             )
+            player.on_probes_attack = partial(
+                self._wrap_callback(self.on_probes_attack),
+                player=player,
+            )
+
+    async def place_order(self, order: Order) -> None:
+        """
+        Place an order
+
+        Try to resolve it directly, if not
+        possible, add it to the orders pool
+        and tries to resolve it on game state update
+
+        Note: equivalent to calling `game.place_order`
+        """
+        await self.game.place_order(order)
 
     def _wrap_callback(self, cb):
         async def wrapper(*args, **kwargs):
@@ -57,4 +75,7 @@ class Behaviour:
         """ """
 
     async def on_probe_build(self, probe: Probe, player: Player) -> None:
+        """ """
+
+    async def on_probes_attack(self, probes: list[Probe], player: Player) -> None:
         """ """
