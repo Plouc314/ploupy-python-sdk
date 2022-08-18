@@ -5,7 +5,7 @@ from functools import partial
 
 from pydantic import BaseModel, ValidationError
 
-from .models import core as _c, actions as _a, game as _g
+from .models import core as _c, sio as _s, game as _g
 from .core import InvalidServerDataFormatException
 from .gamemanager import GameManager
 from .sio import sio
@@ -41,6 +41,7 @@ def with_model(Model: Type[BaseModel]) -> Callable[[dict], Awaitable[str]]:
 
 class EventsHandler:
     def __init__(self, game_manager: GameManager) -> None:
+        self._uid = game_manager._uid
         self._game_manager = game_manager
         _bind_events(self)
 
@@ -56,7 +57,10 @@ def _bind_events(handler: EventsHandler):
 
     @sio.event
     async def connect_error(data):
-        msg = data["message"]
+        if type(data) is str:
+            msg = data
+        elif type(data) is dict:
+            msg = data.get("message")
         logger.error(f"Connection failed: {msg}")
 
     @sio.event
@@ -64,14 +68,26 @@ def _bind_events(handler: EventsHandler):
         logger.info("Disconnected.")
 
     @sio.on("queue_invitation")
-    @with_model(_c.QueueInvitation)
-    async def queue_invitation(model: _c.QueueInvitation):
-        await sio.emit("join_queue", _a.JoinQueue(qid=model.qid).dict())
+    @with_model(_s.responses.QueueInvitation)
+    async def queue_invitation(model: _s.responses.QueueInvitation):
+        await sio.emit("join_queue", _s.actions.JoinQueue(qid=model.qid).dict())
 
     @sio.on("start_game")
-    @with_model(_c.StartGame)
-    async def start_game(data: _c.StartGame):
-        await sio.emit("game_state", _a.GameState(gid=data.gid).dict())
+    @with_model(_s.responses.StartGame)
+    async def start_game(data: _s.responses.StartGame):
+        await sio.emit("game_state", _s.actions.GameState(gid=data.gid).dict())
+
+    @sio.on("game_result")
+    @with_model(_s.responses.GameResults)
+    async def game_result(data: _s.responses.GameResults):
+
+        for i, u in enumerate(data.ranking):
+            if u.uid == handler._uid:
+                break
+
+        logger.info(
+            f"[gid: {data.gid[:4]}] Game ended (rank: {i + 1}/{len(data.ranking)})"
+        )
 
     @sio.on("game_state")
     @with_model(_g.GameState)

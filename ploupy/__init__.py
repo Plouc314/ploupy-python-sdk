@@ -7,7 +7,8 @@ from .core.exceptions import (
     ActionFailedException,
 )
 from .game import Factory, Player, Turret, Probe, Map, Tile, Game
-from .actions import Actions
 from .behaviour import Behaviour
 from .bot import Bot
 from .order import Order
+from .orders import BuildFactoryOrder, BuildTurretOrder
+from .geometry import get_closest_tile, get_center, get_centers

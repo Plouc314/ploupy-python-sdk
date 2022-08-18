@@ -12,12 +12,14 @@ from ..core import InvalidStateException
 
 if TYPE_CHECKING:
     from .game import Game
+    from .player import Player
 
 
 class Turret(Entity):
-    def __init__(self, state: TurretState, game: Game) -> None:
+    def __init__(self, state: TurretState, owner: Player, game: Game) -> None:
         super().__init__()
         self._assert_complete_state(state)
+        self._owner = owner
         self._map = game.map
         self._config = game.config
         self._id: str = state.id

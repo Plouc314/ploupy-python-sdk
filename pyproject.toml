@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ploupy-sdk"
-version = "0.0.2"
+version = "0.0.3"
 description = "SDK for writing bots in ploupy.plouc314.ch"
 readme = "README.md"
 authors = [
@@ -20,11 +20,14 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
 ]
 dependencies = [
-    "numpy >= 1.23.1",
+    "requests",
+    "toml >= 0.10.2",
+    "numpy >= 1.22.4",
     "python-socketio[asyncio_client] >= 5.7.1",
-    "pydantic >= 1.9.2",
+    "pydantic >= 1.9.0",
     "pyjwt >= 2.4.0",
     "colorlog >= 6.6.0",
+    "scipy >= 1.7.3",
 ]
 requires-python = ">=3.10"
 

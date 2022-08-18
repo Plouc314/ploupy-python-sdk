@@ -16,9 +16,8 @@ if TYPE_CHECKING:
     from .game import Game
 
 
-class Tile(OrderMixin):
+class Tile:
     def __init__(self, state: TileState, game: Game) -> None:
-        super().__init__()
         self._assert_complete_state(state)
         self._config: GameConfig = game.config
         self._id: str = state.id
@@ -41,6 +40,7 @@ class Tile(OrderMixin):
 
     @property
     def owner(self) -> str | None:
+        """Username of owner"""
         return self._owner
 
     @property
@@ -66,9 +66,3 @@ class Tile(OrderMixin):
         self._owner = state.owner
         if state.occupation is not None:
             self._occupation = state.occupation
-
-        for (on, action) in self._orders:
-            if on(self):
-                action(self)
-
-        await self._resolve_orders()

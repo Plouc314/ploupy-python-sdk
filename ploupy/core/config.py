@@ -2,12 +2,12 @@
 Contains global configurations flags
 """
 
-VERSION: str = "0.0.1"
+VERSION: str = "0.0.3"
 """
 SDK version
 """
 
-FLAG_DEPLOY: bool = False
+FLAG_DEPLOY: bool = True
 """
 Flag that indicates whether the SDK is deploy or dev mode
 """

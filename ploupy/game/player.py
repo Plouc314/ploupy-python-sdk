@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from ..models.game.entities import FactoryState, ProbeState, TurretState
+
 from ..models.core import GameConfig
 from ..order import OrderMixin
 from .entity import Entity
@@ -15,7 +17,7 @@ if TYPE_CHECKING:
     from .game import Game
 
 
-class Player(OrderMixin, Entity):
+class Player(Entity):
     def __init__(self, state: PlayerState, game: Game) -> None:
         super().__init__()
         self._assert_complete_state(state)
@@ -26,12 +28,18 @@ class Player(OrderMixin, Entity):
         self._money: int = state.money
         self._income: int = state.income
         self._factories: dict[str, Factory] = {
-            s.id: Factory(s, game) for s in state.factories
+            s.id: Factory(s, self, game) for s in state.factories
         }
         self._turrets: dict[str, Turret] = {
-            s.id: Turret(s, game) for s in state.turrets
+            s.id: Turret(s, self, game) for s in state.turrets
         }
-        self._probes: dict[str, Probe] = {s.id: Probe(s, game) for s in state.probes}
+        self._probes: dict[str, Probe] = {
+            s.id: Probe(s, self, game) for s in state.probes
+        }
+
+        # store currently attacking probes
+        # -> to notify of their attack only once
+        self._attacking_probes: list[Probe] = []
 
     def _assert_complete_state(self, state: PlayerState):
         if None in (state.money, state.income):
@@ -61,7 +69,25 @@ class Player(OrderMixin, Entity):
     def probes(self) -> list[Probe]:
         return list(self._probes.values())
 
-    async def on_income(self, new: int, old: int) -> None:
+    def can_build_factory(self) -> bool:
+        """
+        Return if the player can build a factory
+
+        Note: this does not take the tile into account,
+        `tile.can_build` should also be called.
+        """
+        return self._money >= self._config.factory_price
+
+    def can_build_turret(self) -> bool:
+        """
+        Return if the player can build a turret
+
+        Note: this does not take the tile into account,
+        `tile.can_build` should also be called.
+        """
+        return self._money >= self._config.turret_price
+
+    async def on_income(self, money: int) -> None:
         """
         Called when the money is updated
         """
@@ -75,14 +101,18 @@ class Player(OrderMixin, Entity):
     async def on_probe_build(self, probe: Probe) -> None:
         """ """
 
+    async def on_probes_attack(
+        self, probes: list[Probe], attacked_player: Player
+    ) -> None:
+        """"""
+
     async def _update_state(self, state: PlayerState):
         """
         Update instance with given state
         """
         if state.money is not None:
-            old = self._money
             self._money = state.money
-            await self.on_income(self._money, old)
+            await self.on_income(self._money)
 
         if state.income is not None:
             self._income = state.income
@@ -90,35 +120,77 @@ class Player(OrderMixin, Entity):
         if state.death is not None:
             self._die(state.death)
 
-        for fs in state.factories:
+        await self._update_factories(state.factories)
+        await self._update_turrets(state.turrets)
+        await self._update_probes(state.probes)
+
+    async def _update_factories(self, factories_states: list[FactoryState]):
+        """
+        Update factories
+        """
+
+        for fs in factories_states:
             factory = self._factories.get(fs.id)
             if factory is None:
-                factory = Factory(fs, self._game)
+                factory = Factory(fs, self, self._game)
                 self._factories[fs.id] = factory
                 await self.on_factory_build(factory)
             else:
                 await factory._update_state(fs)
 
-        for ts in state.turrets:
+        Entity._remove_deads(self._factories)
+
+    async def _update_turrets(self, turrets_states: list[TurretState]):
+        """
+        Update turrets
+        """
+        for ts in turrets_states:
             turret = self._turrets.get(ts.id)
             if turret is None:
-                turret = Turret(ts, self._game)
+                turret = Turret(ts, self, self._game)
                 self._turrets[ts.id] = turret
                 await self.on_turret_build(turret)
             else:
                 await turret._update_state(ts)
 
-        for ps in state.probes:
+        Entity._remove_deads(self._turrets)
+
+    async def _update_probes(self, probes_states: list[ProbeState]):
+        """
+        Update probes
+        """
+        probes: list[Probe] = []
+        for ps in probes_states:
             probe = self._probes.get(ps.id)
             if probe is None:
-                probe = Probe(ps, self._game)
+                probe = Probe(ps, self, self._game)
                 self._probes[ps.id] = probe
                 await self.on_probe_build(probe)
             else:
                 await probe._update_state(ps)
+            probes.append(probe)
 
-        Entity._remove_deads(self._factories)
-        Entity._remove_deads(self._turrets)
+        # handle probes_attack callback
+        # group probes by targeted player
+        new_attacking_probes: dict[str, list[Probe]] = {}
+        for probe in probes:
+            if not probe.attacking or not probe.alive:
+                continue
+            if not probe in self._attacking_probes:
+                self._attacking_probes.append(probe)
+
+                # get attacked tile
+                tile = self._game.map.get_tile(probe.target)
+                if tile is None or tile.owner is None:
+                    continue
+
+                if not tile.owner in new_attacking_probes.keys():
+                    new_attacking_probes[tile.owner] = []
+                new_attacking_probes[tile.owner].append(probe)
+
+        # trigger a callback for each attacked player
+        for username, probes in new_attacking_probes.items():
+            player = [p for p in self._game.players if p.username == username][0]
+            await self.on_probes_attack(probes, player)
+
         Entity._remove_deads(self._probes)
-
-        await self._resolve_orders()

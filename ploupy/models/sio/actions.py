@@ -1,6 +1,11 @@
 from pydantic import BaseModel
 
-from .core import Point
+from ..core import core
+
+
+class CreateQueue(BaseModel):
+    gmid: str
+    """game mode id"""
 
 
 class JoinQueue(BaseModel):
@@ -15,28 +20,46 @@ class GameState(BaseModel):
     gid: str
 
 
+class SendQueueInvitation(BaseModel):
+    qid: str
+    uid: str
+
+
+class DisconnectBot(BaseModel):
+    bot_uid: str
+
+
+class ResignGame(BaseModel):
+    gid: str
+
+
 class BuildFactory(BaseModel):
-    coord: Point
+    gid: str
+    coord: core.Point
     """Coordinate where to build the factory"""
 
 
 class BuildTurret(BaseModel):
-    coord: Point
+    gid: str
+    coord: core.Point
     """Coordinate where to build the turret"""
 
 
 class MoveProbes(BaseModel):
+    gid: str
     ids: list[str]
     """List of the ids of each probe to move"""
-    target: Point
+    target: core.Point
     """Coordinate of the target"""
 
 
 class ExplodeProbes(BaseModel):
+    gid: str
     ids: list[str]
     """List of the ids of each probe to explode"""
 
 
 class ProbesAttack(BaseModel):
+    gid: str
     ids: list[str]
     """List of the ids of each probe that will attack"""
