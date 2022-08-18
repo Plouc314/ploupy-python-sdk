@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ploupy-sdk"
-version = "0.0.2"
+version = "0.0.3"
 description = "SDK for writing bots in ploupy.plouc314.ch"
 readme = "README.md"
 authors = [
