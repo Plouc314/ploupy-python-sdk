@@ -66,7 +66,3 @@ class Tile:
         self._owner = state.owner
         if state.occupation is not None:
             self._occupation = state.occupation
-
-        for (on, action) in self._orders:
-            if on(self):
-                action(self)

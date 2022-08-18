@@ -26,9 +26,10 @@ class BuildFactoryOrder(Order):
         tile: Tile,
         on: Callable[[], bool] | None = None,
         action: Callable[[], Awaitable[None]] | None = None,
+        with_timeout: float | None = None,
         with_retry: bool = True,
     ) -> None:
-        super().__init__(self._on, self._action)
+        super().__init__(self._on, self._action, with_timeout=with_timeout)
         self._player = player
         self._tile = tile
         self._custom_on = on
@@ -52,7 +53,7 @@ class BuildFactoryOrder(Order):
         if nth_try >= self.MAX_RETRIES:
             return  # abort
         try:
-            await Actions.build_factory(self._tile.coord)
+            await Actions.build_factory(self._player._game._gid, self._tile.coord)
         except ActionFailedException:
             if not self._with_retry:
                 return
@@ -85,9 +86,10 @@ class BuildTurretOrder(Order):
         tile: Tile,
         on: Callable[[], bool] | None = None,
         action: Callable[[], Awaitable[None]] | None = None,
+        with_timeout: float | None = None,
         with_retry: bool = True,
     ) -> None:
-        super().__init__(self._on, self._action)
+        super().__init__(self._on, self._action, with_timeout=with_timeout)
         self._player = player
         self._tile = tile
         self._custom_on = on if on is not None else lambda: True
@@ -111,7 +113,7 @@ class BuildTurretOrder(Order):
         if nth_try >= self.MAX_RETRIES:
             return  # abort
         try:
-            await Actions.build_turret(self._tile.coord)
+            await Actions.build_turret(self._player._game._gid, self._tile.coord)
         except ActionFailedException:
             if not self._with_retry:
                 return

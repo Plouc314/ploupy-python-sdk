@@ -87,7 +87,7 @@ class Player(Entity):
         """
         return self._money >= self._config.turret_price
 
-    async def on_income(self, new: int, old: int) -> None:
+    async def on_income(self, money: int) -> None:
         """
         Called when the money is updated
         """
@@ -101,7 +101,9 @@ class Player(Entity):
     async def on_probe_build(self, probe: Probe) -> None:
         """ """
 
-    async def on_probes_attack(self, probes: list[Probe]) -> None:
+    async def on_probes_attack(
+        self, probes: list[Probe], attacked_player: Player
+    ) -> None:
         """"""
 
     async def _update_state(self, state: PlayerState):
@@ -109,9 +111,8 @@ class Player(Entity):
         Update instance with given state
         """
         if state.money is not None:
-            old = self._money
             self._money = state.money
-            await self.on_income(self._money, old)
+            await self.on_income(self._money)
 
         if state.income is not None:
             self._income = state.income
@@ -170,15 +171,26 @@ class Player(Entity):
             probes.append(probe)
 
         # handle probes_attack callback
-        new_attacking_probes = []
+        # group probes by targeted player
+        new_attacking_probes: dict[str, list[Probe]] = {}
         for probe in probes:
             if not probe.attacking or not probe.alive:
                 continue
             if not probe in self._attacking_probes:
                 self._attacking_probes.append(probe)
-                new_attacking_probes.append(probe)
 
-        if len(new_attacking_probes) > 0:
-            await self.on_probes_attack(new_attacking_probes)
+                # get attacked tile
+                tile = self._game.map.get_tile(probe.target)
+                if tile is None or tile.owner is None:
+                    continue
+
+                if not tile.owner in new_attacking_probes.keys():
+                    new_attacking_probes[tile.owner] = []
+                new_attacking_probes[tile.owner].append(probe)
+
+        # trigger a callback for each attacked player
+        for username, probes in new_attacking_probes.items():
+            player = [p for p in self._game.players if p.username == username][0]
+            await self.on_probes_attack(probes, player)
 
         Entity._remove_deads(self._probes)

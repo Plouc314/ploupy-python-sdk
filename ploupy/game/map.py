@@ -55,6 +55,17 @@ class Map:
                 return True
         return False
 
+    def get_buildable_tiles(self, player: Player) -> list[Tile]:
+        """
+        Return tiles where a building can be built by the given player
+        """
+        tiles = []
+        for tile in self._map_tiles.values():
+            if tile.can_build(player):
+                tiles.append(tile)
+
+        return tiles
+
     async def _update_state(self, state: MapState):
         """
         Update instance with given state
