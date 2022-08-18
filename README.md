@@ -30,9 +30,10 @@ if __name__ == "__main__":
 ## Behaviour
 
 The SDK is events driven. Define the bot by inheriting from the `Behaviour` class
-and overriding callback methods.
+and overriding callback methods (all callbacks are **async**).
 
 Here is an example of a bot that build a factory as soon as he can:
+
 ```python
 import ploupy as pp
 
