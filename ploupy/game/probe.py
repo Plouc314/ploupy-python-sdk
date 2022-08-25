@@ -37,10 +37,12 @@ class Probe(Entity):
 
     @property
     def pos(self) -> np.ndarray:
+        """Current position (dtype: float)"""
         return self._pos.copy()
 
     @property
     def target(self) -> np.ndarray:
+        """Where the probe is going (dtype: int)"""
         if self._target is None:
             return None
         return self._target.copy()

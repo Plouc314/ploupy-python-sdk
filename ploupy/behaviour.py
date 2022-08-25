@@ -2,6 +2,7 @@ from functools import partial
 
 from .order import Order
 from .models.core import Pos
+from .models.game import Techs
 from .core.exceptions import PloupyException
 from .game import Game, Probe, Turret, Player, Factory
 from .actions import Actions
@@ -154,6 +155,17 @@ class Behaviour:
             ActionFailedException: When the action can't be performed
         """
         await Actions.probes_attack(self.game._gid, probes)
+
+    async def acquire_tech(self, tech: Techs):
+        """
+        Send an action to the server
+
+        Acquire the given tech.
+
+        Raises:
+            ActionFailedException: When the action can't be performed
+        """
+        await Actions.acquire_tech(self.game._gid, tech)
 
     async def on_start(self) -> None:
         """

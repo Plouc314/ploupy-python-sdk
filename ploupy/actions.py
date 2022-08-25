@@ -7,7 +7,7 @@ from .game.probe import Probe
 
 from .core.exceptions import ActionFailedException
 
-from .models import core as _c, sio as _s
+from .models import core as _c, sio as _s, game as _g
 from .sio import sio
 
 logger = logging.getLogger("ploupy")
@@ -49,3 +49,8 @@ class Actions:
     async def probes_attack(cls, gid: str, probes: list[Probe]):
         model = _s.actions.ProbesAttack(gid=gid, ids=[p.id for p in probes])
         await cls._send_action("action_probes_attack", model)
+
+    @classmethod
+    async def acquire_tech(cls, gid: str, tech: _g.Techs):
+        model = _s.actions.AcquireTech(gid=gid, tech=tech.name)
+        await cls._send_action("action_acquire_tech", model)

@@ -12,3 +12,4 @@ from .bot import Bot
 from .order import Order
 from .orders import BuildFactoryOrder, BuildTurretOrder
 from .geometry import get_closest_tile, get_center, get_centers
+from .models.game import Techs

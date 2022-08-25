@@ -112,6 +112,14 @@ class GameConfig(BaseModel):
     delay to wait claim a tile, the probe can be manually moved but not claim
     another tile during the delay (see Probe `is_claiming` flag for details)
     """
+    probe_claim_intensity: int
+    """
+    intensity of claiming when farming
+    """
+    probe_explosion_intensity: int
+    """
+    intensity of claiming when exploding
+    """
     probe_maintenance_costs: float
     """
     Costs of possessing one probe (computed in the player's income)
@@ -141,6 +149,22 @@ class GameConfig(BaseModel):
     """
     probability that a tile with maximum occupation lose 1 occupation
     """
+    tech_probe_explosion_intensity_increase: int
+    tech_probe_explosion_intensity_price: float
+    tech_probe_claim_intensity_increase: int
+    tech_probe_claim_intensity_price: float
+    tech_factory_build_delay_decrease: float
+    tech_factory_build_delay_price: float
+    tech_factory_probe_price_decrease: float
+    tech_factory_probe_price_price: float
+    tech_factory_max_probe_increase: int
+    tech_factory_max_probe_price: float
+    tech_turret_scope_increase: float
+    tech_turret_scope_price: float
+    tech_turret_fire_delay_decrease: float
+    tech_turret_fire_delay_price: float
+    tech_turret_maintenance_costs_decrease: float
+    tech_turret_maintenance_costs_price: float
 
 
 class User(BaseModel):
