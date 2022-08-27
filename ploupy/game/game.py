@@ -1,6 +1,6 @@
 from ..order import OrderMixin
 from .entity import Entity
-from ..models.core import GameConfig
+from ..models.core import GameConfig, GameMetadata
 from ..models.game import GameState
 from ..core import InvalidStateException
 
@@ -14,18 +14,23 @@ class Game(OrderMixin):
         self._assert_complete_state(state)
         self._gid = state.gid
         self._config: GameConfig = state.config
+        self._metadata: GameMetadata = state.metadata
         self._map: Map = Map(state.map, self)
         self._players: dict[str, Player] = {
             s.uid: Player(s, self) for s in state.players
         }
 
     def _assert_complete_state(self, state: GameState):
-        if None in (state.config, state.map):
+        if None in (state.config, state.metadata, state.map):
             raise InvalidStateException()
 
     @property
     def config(self) -> GameConfig:
         return self._config
+
+    @property
+    def metadata(self) -> GameMetadata:
+        return self._metadata
 
     @property
     def map(self) -> Map:

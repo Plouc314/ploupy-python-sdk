@@ -15,11 +15,12 @@ class Map:
     def __init__(self, state: MapState, game: Game) -> None:
         self._game = game
         self._config: GameConfig = game.config
+        self._metadata = game.metadata
         self._map_tiles: dict[str, Tile] = {s.id: Tile(s, game) for s in state.tiles}
         self._matrix_tiles: list[list[Tile]] = self._build_matrix_tiles()
 
     def _build_matrix_tiles(self) -> list[list[Tile]]:
-        x, y = self._config.dim.coord
+        x, y = self._metadata.dim.coord
         matrix = [[None for _ in range(y)] for _ in range(x)]
 
         for tile in self._map_tiles.values():
@@ -35,7 +36,7 @@ class Map:
         Return the tile at the given coord, if it exists
         """
         x, y = coord
-        if x < 0 or y < 0 or x >= self._config.dim.x or y >= self._config.dim.y:
+        if x < 0 or y < 0 or x >= self._metadata.dim.x or y >= self._metadata.dim.y:
             return None
         return self._matrix_tiles[x][y]
 
