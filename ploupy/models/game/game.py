@@ -6,14 +6,22 @@ from ..game import entities
 
 
 class Techs(Enum):
-    PROBE_EXPLOSION_INTENSITY = auto()
-    PROBE_CLAIM_INTENSITY = auto()
-    FACTORY_BUILD_DELAY = auto()
-    FACTORY_PROBE_PRICE = auto()
-    FACTORY_MAX_PROBE = auto()
-    TURRET_SCOPE = auto()
-    TURRET_FIRE_DELAY = auto()
-    TURRET_MAINTENANCE_COSTS = auto()
+    PROBE_EXPLOSION_INTENSITY = "PROBE_EXPLOSION_INTENSITY"
+    PROBE_CLAIM_INTENSITY = "PROBE_CLAIM_INTENSITY"
+    PROBE_HP = "PROBE_HP"
+    FACTORY_BUILD_DELAY = "FACTORY_BUILD_DELAY"
+    FACTORY_PROBE_PRICE = "FACTORY_PROBE_PRICE"
+    FACTORY_MAX_PROBE = "FACTORY_MAX_PROBE"
+    TURRET_SCOPE = "TURRET_SCOPE"
+    TURRET_FIRE_DELAY = "TURRET_FIRE_DELAY"
+    TURRET_MAINTENANCE_COSTS = "TURRET_MAINTENANCE_COSTS"
+
+    @property
+    def type(self) -> str:
+        """
+        The tech type: "probe" | "turret" | "factory"
+        """
+        return self.name.split("_")[0].lower()
 
 
 class MapState(BaseModel):
@@ -35,6 +43,7 @@ class PlayerState(BaseModel):
 class GameState(BaseModel):
     gid: str
     config: _c.GameConfig | None = None
+    metadata: _c.GameMetadata | None = None
     map: MapState | None = None
     players: list[PlayerState] = []
 

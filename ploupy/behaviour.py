@@ -16,6 +16,7 @@ class Behaviour:
 
     Each instance of the class exposes some useful attributes:
     * config : The game config
+    * metadata: The game metadata
     * game : The game instance
     * map : The map instance
     * player : The bot's player instance
@@ -46,6 +47,7 @@ class Behaviour:
     def __init__(self, uid: str, game: Game) -> None:
         self._uid = uid
         self.config = game.config
+        self.metadata = game.metadata
         self.game = game
         self.map = game.map
         self.player = self.game.get_player(self._uid)
@@ -76,6 +78,10 @@ class Behaviour:
             player.on_probes_attack = partial(
                 self._wrap_callback(self.on_probes_attack),
                 attacking_player=player,
+            )
+            player.on_acquire_tech = partial(
+                self._wrap_callback(self.on_acquire_tech),
+                player=player,
             )
 
     def _wrap_callback(self, cb):
@@ -202,4 +208,9 @@ class Behaviour:
 
         Note: Only called once by attack, the callback won't be triggered again in
         case one of the probe change its target during the attack
+        """
+
+    async def on_acquire_tech(self, tech: Techs, player: Player) -> None:
+        """
+        Called when `player` acquires a new tech
         """
