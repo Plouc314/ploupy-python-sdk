@@ -27,6 +27,8 @@ def get_center(positions: list[Pos]) -> np.ndarray | None:
 
     Note: return None if `positions` is empty
     """
+    if len(positions) == 0:
+        return None
     return get_centers(positions, 1)[0]
 
 
@@ -35,6 +37,9 @@ def get_centers(positions: list[Pos], n_center) -> list[np.ndarray]:
     Return the n centers that fit the best for the given positions
     (as defined by the k-means algorithm)
     """
+    if len(positions) == 0:
+        return None
+
     positions = np.array(positions, dtype=float)
 
     centers, _ = kmeans2(positions, k=n_center, minit="points")

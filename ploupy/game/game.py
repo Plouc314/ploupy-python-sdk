@@ -1,4 +1,4 @@
-from ..order import OrderMixin
+from ..order import OrderMixin, Order
 from .entity import Entity
 from ..models.core import GameConfig, GameMetadata
 from ..models.game import GameState
@@ -51,6 +51,20 @@ class Game(OrderMixin):
         Return the opponents of the given player
         """
         return [p for p in self.players if p._uid != player._uid]
+
+    async def place_order(self, order: Order) -> None:
+        """
+        Place an order
+
+        Warning:
+            This method should NOT be used with predefined
+            orders (such as `BuildFactoryOrder`, `AcquireTechOrder`, ...)
+            see `Behaviour.place_order` instead.
+
+            Only use this method with custom order directly inheriting from
+            `Order` class.
+        """
+        return await super().place_order(order)
 
     async def _update_state(self, state: GameState):
         """

@@ -1,6 +1,7 @@
 from functools import partial
 
 from .order import Order
+from .orders import PloupyOrder
 from .models.core import Pos
 from .models.game import Techs
 from .core.exceptions import PloupyException
@@ -97,9 +98,13 @@ class Behaviour:
         Try to resolve it directly, if not
         possible, add it to the orders pool
         and tries to resolve it on game state update
-
-        Note: equivalent to calling `game.place_order`
         """
+        print("behaviour", order)
+        # set player instance for ploupy order
+        # -> always bot's player
+        if isinstance(order, PloupyOrder):
+            order._player = self.player
+
         await self.game.place_order(order)
 
     async def build_factory(self, coord: Pos):

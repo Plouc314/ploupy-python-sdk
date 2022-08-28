@@ -94,7 +94,6 @@ class MyBehaviour(pp.Behaviour):
         # when the necessary conditions are met
         await self.place_order(
             pp.BuildTurretOrder(
-                self.player,
                 tile,
                 with_timeout=2.0, # maximum time (sec) before aborting the order
                 with_retry=False, # if the action should be retried in case of failure

@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from ..models.core import GameConfig, Pos
 from ..models.game import MapState
 
@@ -35,7 +37,7 @@ class Map:
         """
         Return the tile at the given coord, if it exists
         """
-        x, y = coord
+        x, y = np.array(coord, dtype=int)
         if x < 0 or y < 0 or x >= self._metadata.dim.x or y >= self._metadata.dim.y:
             return None
         return self._matrix_tiles[x][y]
