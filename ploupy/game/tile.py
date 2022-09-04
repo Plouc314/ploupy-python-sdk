@@ -30,6 +30,9 @@ class Tile:
         if None in (state.coord, state.occupation):
             raise InvalidStateException()
 
+    def __hash__(self) -> int:
+        return hash(self._id)
+
     @property
     def id(self) -> str:
         return self._id

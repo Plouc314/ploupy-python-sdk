@@ -6,7 +6,7 @@ from functools import partial
 from pydantic import BaseModel, ValidationError
 
 from .models import core as _c, sio as _s, game as _g
-from .core import InvalidServerDataFormatException
+from .core import InvalidServerDataFormatException, InvalidStateException
 from .gamemanager import GameManager
 from .sio import sio
 
@@ -96,7 +96,11 @@ def _bind_events(handler: EventsHandler):
         game = handler._game_manager.get_game(state.gid)
 
         if game is None:
-            logger.info(f"[gid: {state.gid[:4]}] New game")
-            await handler._game_manager.create_game(state)
+            try:
+                await handler._game_manager.create_game(state)
+            except InvalidStateException:
+                logger.warning(f"[gid: {state.gid[:4]}] failed to create game.")
+            else:
+                logger.info(f"[gid: {state.gid[:4]}] New game")
         else:
             await game._update_state(state)
