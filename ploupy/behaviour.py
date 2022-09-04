@@ -30,7 +30,9 @@ class Behaviour:
     * `on_factory_build`
     * `on_turret_build`
     * `on_probe_build`
+    * `on_move_probes`
     * `on_probes_attack`
+    * `on_acquire_tech`
 
     ---
 
@@ -45,7 +47,7 @@ class Behaviour:
     (see `place_order`)
     """
 
-    def __init__(self, uid: str, game: Game) -> None:
+    def __init__(self, uid: str, game: Game, _bind_callbacks: bool = True) -> None:
         self._uid = uid
         self.config = game.config
         self.metadata = game.metadata
@@ -55,12 +57,14 @@ class Behaviour:
         if self.player is None:
             raise PloupyException("Can't find own player.")
 
-        self._bind_callbacks()
+        if _bind_callbacks:
+            self._bind_callbacks()
 
     def _bind_callbacks(self):
         """
         Bind Behaviour callbacks to corresponding Player callbacks
         """
+        self.game.on_order_fail = self._wrap_callback(self.on_order_fail)
         self.player.on_income = self._wrap_callback(self.on_income)
 
         for player in self.game.players:
@@ -74,6 +78,10 @@ class Behaviour:
             )
             player.on_probe_build = partial(
                 self._wrap_callback(self.on_probe_build),
+                player=player,
+            )
+            player.on_move_probes = partial(
+                self._wrap_callback(self.on_move_probes),
                 player=player,
             )
             player.on_probes_attack = partial(
@@ -99,7 +107,6 @@ class Behaviour:
         possible, add it to the orders pool
         and tries to resolve it on game state update
         """
-        print("behaviour", order)
         # set player instance for ploupy order
         # -> always bot's player
         if isinstance(order, PloupyOrder):
@@ -183,6 +190,11 @@ class Behaviour:
         Called on start of the game
         """
 
+    async def on_order_fail(self, order: Order) -> None:
+        """
+        Called when an order fails
+        """
+
     async def on_income(self, money: int) -> None:
         """
         Called when the bot's money is updated
@@ -205,6 +217,13 @@ class Behaviour:
         Called when a probe is built by `player`
         """
 
+    async def on_move_probes(
+        self, probes: list[Probe], target: Pos, player: Player
+    ) -> None:
+        """
+        Called when some probes of `Player` are given a new target
+        """
+
     async def on_probes_attack(
         self, probes: list[Probe], attacked_player: Player, attacking_player: Player
     ) -> None:
@@ -218,4 +237,99 @@ class Behaviour:
     async def on_acquire_tech(self, tech: Techs, player: Player) -> None:
         """
         Called when `player` acquires a new tech
+        """
+
+
+class BehaviourDispatcher(Behaviour):
+    """
+    Behaviour dispatcher
+
+    Works with `BehaviourStage` class
+
+    Use this class to encapsulate different stages of the game
+    as separate `BehaviourStage` classes.
+
+    Warning:
+        Do NOT override from `Behaviour` methods in this class.
+        It will be ignored. Instead override these methods in
+        `BehaviourStage` classes.
+    """
+
+    def __init__(self, uid: str, game: Game) -> None:
+
+        self._current_stage: str | None = None
+        self._stages: dict[str, BehaviourStage] = {}
+
+        self._build_dispatchers()
+
+        # must be called after building dispatchers
+        # -> callbacks are binded in parent __init__
+        super().__init__(uid, game, _bind_callbacks=True)
+
+    def _build_dispatchers(self):
+        """
+        Build dispatcher in each callback,
+        to call the callback of the current stage.
+        """
+        for attr in dir(self):
+            if attr.startswith("on_"):
+                setattr(self, attr, self._dispatch_callback(attr))
+
+    def _dispatch_callback(self, cb_name: str):
+        async def wrapper(*args, **kwargs):
+            stage = self._stages[self._current_stage]
+            cb = getattr(stage, cb_name)
+            await cb(*args, **kwargs)
+
+        return wrapper
+
+    def add_stage(self, stage: "BehaviourStage") -> None:
+        """
+        Add a stage to the dispatcher
+        """
+        self._stages[stage.name] = stage
+        if self._current_stage is None:
+            self._current_stage = stage.name
+
+    async def set_current_stage(self, stage_name: str) -> None:
+        """
+        Set the current stage
+        """
+        if stage_name not in self._stages.keys():
+            raise PloupyException(f"Invalid stage name: '{stage_name}'")
+        self._current_stage = stage_name
+
+        await self._stages[self._current_stage].on_stage()
+
+
+class BehaviourStage(Behaviour):
+    """
+    Behaviour stage
+
+    Use as a standard `Behaviour` class.
+
+    Use `set_current_stage` to change stage.
+
+    A callback is specific to this class:
+    * `on_stage`
+    """
+
+    def __init__(self, dispatcher: BehaviourDispatcher, name: str) -> None:
+        super().__init__(
+            uid=dispatcher._uid,
+            game=dispatcher.game,
+            _bind_callbacks=False,
+        )
+        self._dispatcher: BehaviourDispatcher = dispatcher
+        self.name = name
+
+    async def set_current_stage(self, stage_name: str) -> None:
+        """
+        Set the current stage
+        """
+        await self._dispatcher.set_current_stage(stage_name)
+
+    async def on_stage(self) -> None:
+        """
+        Called when this stage is selected as current.
         """

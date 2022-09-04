@@ -52,6 +52,11 @@ class Game(OrderMixin):
         """
         return [p for p in self.players if p._uid != player._uid]
 
+    async def on_order_fail(self, order: Order) -> None:
+        """
+        Called when an order fails
+        """
+
     async def place_order(self, order: Order) -> None:
         """
         Place an order
@@ -81,4 +86,8 @@ class Game(OrderMixin):
 
         Entity._remove_deads(self._players)
 
-        await self._resolve_orders()
+        resolved_orders = await self._resolve_orders()
+
+        for order in resolved_orders:
+            if not order._succeeded:
+                await self.on_order_fail(order)

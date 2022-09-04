@@ -18,12 +18,14 @@ class PloupyOrder(Order):
         self,
         on: Callable[[], bool] | None = None,
         action: Callable[[], Awaitable[None]] | None = None,
+        name: str | None = None,
         with_timeout: float | None = None,
         with_retry: bool = True,
     ) -> None:
         super().__init__(
             self._on,
             self._action,
+            name=name,
             with_timeout=with_timeout,
             with_retry=with_retry,
         )
@@ -55,12 +57,14 @@ class BuildFactoryOrder(PloupyOrder):
         tile: Tile,
         on: Callable[[], bool] | None = None,
         action: Callable[[], Awaitable[None]] | None = None,
+        name: str | None = None,
         with_timeout: float | None = None,
         with_retry: bool = True,
     ) -> None:
         super().__init__(
             on=on,
             action=action,
+            name=name,
             with_timeout=with_timeout,
             with_retry=with_retry,
         )
@@ -91,12 +95,14 @@ class BuildTurretOrder(PloupyOrder):
         tile: Tile,
         on: Callable[[], bool] | None = None,
         action: Callable[[], Awaitable[None]] | None = None,
+        name: str | None = None,
         with_timeout: float | None = None,
         with_retry: bool = True,
     ) -> None:
         super().__init__(
             on=on,
             action=action,
+            name=name,
             with_timeout=with_timeout,
             with_retry=with_retry,
         )
@@ -127,12 +133,14 @@ class AcquireTechOrder(PloupyOrder):
         tech: Techs,
         on: Callable[[], bool] | None = None,
         action: Callable[[], Awaitable[None]] | None = None,
+        name: str | None = None,
         with_timeout: float | None = None,
         with_retry: bool = True,
     ) -> None:
         super().__init__(
             on=on,
             action=action,
+            name=name,
             with_timeout=with_timeout,
             with_retry=with_retry,
         )

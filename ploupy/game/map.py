@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable
 
 import numpy as np
 
@@ -58,16 +58,77 @@ class Map:
                 return True
         return False
 
-    def get_buildable_tiles(self, player: Player) -> list[Tile]:
+    def get_player_tiles(self, player: Player) -> set[Tile]:
         """
-        Return tiles where a building can be built by the given player
+        Return the tiles occupied by the given player
         """
-        tiles = []
+        tiles = set()
         for tile in self._map_tiles.values():
-            if tile.can_build(player):
-                tiles.append(tile)
+            if tile.owner == player.username:
+                tiles.add(tile)
 
         return tiles
+
+    def get_buildable_tiles(self, player: Player) -> set[Tile]:
+        """
+        Return the tiles where a building can be built by the given player
+        """
+        tiles = set()
+        for tile in self._map_tiles.values():
+            if tile.can_build(player):
+                tiles.add(tile)
+
+        return tiles
+
+    def get_unoccupied_tiles(self) -> set[Tile]:
+        """
+        Return the tiles that aren't occupied by any player
+        """
+        return {t for t in self._map_tiles.values() if t.owner is None}
+
+    def get_tiles_border(self, tiles: Iterable[Tile]) -> set[Tile]:
+        """
+        Return the tiles at the border of a group of homogeneous tiles
+        (with the same owner)
+        """
+        border = set()
+        owner = None
+
+        for tile in tiles:
+
+            if owner is None:
+                owner = tile.owner
+
+            if tile.owner != owner:
+                raise ValueError("All tiles must have the same owner")
+
+            neighbours = self.get_tile_neighbours(tile)
+
+            for neighbour in neighbours:
+                if neighbour.owner != owner:
+                    border.add(tile)
+                    break
+
+        return border
+
+    def get_tile_neighbours(self, tile: Tile) -> set[Tile]:
+        """
+        Return the tiles next to `tile`, with the pattern:
+        ```
+          *
+        * X *
+          *
+        ```
+        """
+        x, y = tile.coord
+        neighbours = {
+            self.get_tile((x + 1, y)),
+            self.get_tile((x - 1, y)),
+            self.get_tile((x, y + 1)),
+            self.get_tile((x, y - 1)),
+        }
+        neighbours.discard(None)
+        return neighbours
 
     async def _update_state(self, state: MapState):
         """

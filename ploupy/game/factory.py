@@ -5,7 +5,7 @@ import numpy as np
 
 from .entity import Entity
 
-from ..models.game import FactoryState
+from ..models.game import FactoryState, Techs
 from ..core import InvalidStateException
 
 if TYPE_CHECKING:
@@ -42,6 +42,16 @@ class Factory(Entity):
     @property
     def coord(self) -> np.ndarray:
         return self._coord.copy()
+
+    @property
+    def capacity(self) -> int:
+        """
+        Return how many probes the factory can handle
+        """
+        cap = self._config.factory_max_probe
+        if Techs.FACTORY_MAX_PROBE in self._owner.techs:
+            cap += self._config.tech_factory_max_probe_increase
+        return cap
 
     async def _update_state(self, state: FactoryState):
         """

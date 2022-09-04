@@ -1,9 +1,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from ..models.game.entities import FactoryState, ProbeState, TurretState
 
-from ..models.core import GameConfig
+from ..models.core import GameConfig, Pos
 from .entity import Entity
 from ..models.game import PlayerState, Techs
 from ..core import InvalidStateException
@@ -75,7 +77,7 @@ class Player(Entity):
         The player's current money
         (as of last server income update)
 
-        Note: this might not be exactly the value as on the server,
+        Note: this might not be exactly the same value as on the server,
         which can cause some actions to fail unexpectedly. Thus, it is
         recommended to use orders to perform actions.
         """
@@ -181,6 +183,11 @@ class Player(Entity):
         Called when a probe is built
         """
 
+    async def on_move_probes(self, probes: list[Probe], target: Pos) -> None:
+        """
+        Called when some probes are given a new target
+        """
+
     async def on_probes_attack(
         self, probes: list[Probe], attacked_player: Player
     ) -> None:
@@ -257,6 +264,10 @@ class Player(Entity):
         """
         Update probes
         """
+
+        # store target: probes to target
+        targets: dict[tuple, list[Probe]] = {}
+
         probes: list[Probe] = []
         for ps in probes_states:
             probe = self._probes.get(ps.id)
@@ -265,8 +276,18 @@ class Player(Entity):
                 self._probes[ps.id] = probe
                 await self.on_probe_build(probe)
             else:
+                if ps.target is not None:
+                    t = tuple(ps.target.coord)
+                    if t not in targets.keys():
+                        targets[t] = []
+                    targets[t].append(probe)
+
                 await probe._update_state(ps)
             probes.append(probe)
+
+        # handle move_probes callback
+        for target, moving_probes in targets.items():
+            await self.on_move_probes(moving_probes, np.array(target))
 
         # handle probes_attack callback
         # group probes by targeted player
@@ -288,7 +309,9 @@ class Player(Entity):
 
         # trigger a callback for each attacked player
         for username, probes in new_attacking_probes.items():
-            player = [p for p in self._game.players if p.username == username][0]
-            await self.on_probes_attack(probes, player)
+            # do it this way -> a dead player may be attacked
+            for player in self._game.players:
+                if player.username == username:
+                    await self.on_probes_attack(probes, player)
 
         Entity._remove_deads(self._probes)

@@ -1,13 +1,6 @@
 import numpy as np
 from datetime import datetime
 from pydantic import BaseModel
-from typing import Literal
-
-
-GameModes = Literal["base-2", "base-3", "base-4"]
-"""
-List of all game modes
-"""
 
 
 Coord = list | tuple | np.ndarray
@@ -78,6 +71,14 @@ class GameConfig(BaseModel):
     factory_price: int
     """
     amount to pay to build a new factory
+    """
+    factory_expansion_size: int
+    """
+    the radius of the final expansion size
+    """
+    factory_maintenance_costs: float
+    """
+    Costs of possessing one factory (computed in the player's income)
     """
     factory_max_probe: int
     """
