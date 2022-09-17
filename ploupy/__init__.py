@@ -12,6 +12,6 @@ from .bot import Bot
 from .sio import sleep, start_background_task
 from .order import Order
 from .orders import BuildFactoryOrder, BuildTurretOrder, AcquireTechOrder
-from .geometry import closest_tile, furthest_tile, center, centers
+from .geometry import Rectangle
 from .models.core import Pos
 from .models.game import Techs
