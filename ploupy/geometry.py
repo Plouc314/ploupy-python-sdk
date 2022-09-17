@@ -1,9 +1,21 @@
 from typing import Iterable
 import numpy as np
+from pydantic import BaseModel
 from scipy.cluster.vq import kmeans2
 
 from .game import Tile
-from .models.core import Pos
+from .models.core import Pos, Point
+
+
+class Rectangle(BaseModel):
+    """
+    Represents a rectangle
+    """
+
+    x: float
+    y: float
+    width: float
+    height: float
 
 
 def distance(a: Pos, b: Pos) -> float:
@@ -72,3 +84,27 @@ def centers(positions: Iterable[Pos], n_center) -> list[np.ndarray]:
     _centers, _ = kmeans2(positions, k=n_center, minit="points")
 
     return list(_centers)
+
+
+def wrapping_rectangle(positions: Iterable[Pos]) -> Rectangle | None:
+    """
+    returns the smallest rectangle which contains all the positions
+    """
+    positions = list(positions)
+    if len(positions) == 0:
+        return None
+
+    min_x, min_y = 1e6, 1e6
+    max_x, max_y = -1e6, -1e6
+    for pos in positions:
+        min_x = min(min_x, pos[0])
+        min_y = min(min_y, pos[1])
+        max_x = max(max_x, pos[0])
+        max_y = max(max_y, pos[1])
+
+    return Rectangle(
+        x=min_x,
+        y=min_y,
+        width=max_x - min_x,
+        height=max_y - min_y,
+    )
